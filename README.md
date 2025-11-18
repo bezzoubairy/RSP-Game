@@ -1,6 +1,6 @@
-# Rock Paper Scissors (Version 1)
+# Rock Paper Scissors - Distributed Game System
 
-This project implements a basic two-person, turn-based rock-paper-scissors game using a distributed microservices architecture. This is the initial version of the project, primarily demonstrating HTTP-based communication between services and a command-line interface (CLI) client that uses HTTP polling for game state updates.
+This project is a simple, two-person, turn-based rock-paper-scissors game implemented with a distributed microservices architecture.
 
 ## 1. Technology Summary
 
@@ -9,7 +9,7 @@ The project is built with the following technologies:
 | Component      | Technology                                      |
 |----------------|-------------------------------------------------|
 | **Backend**    | Python 3, FastAPI, Uvicorn                      |
-| **CLI Client** | Python 3, `requests`                            |
+| **CLI Client** | Python 3, `websockets`, `requests`, `asyncio`   |
 
 ### Microservices
 
@@ -19,17 +19,18 @@ The project is built with the following technologies:
 
 ## 2. Architecture Overview
 
-The system follows a microservices architecture where each service is responsible for a specific domain. Services communicate with each other via HTTP REST calls. 
-The CLI client also communicates with the backend services using HTTP requests, employing a polling mechanism to check for game state updates.
+The system follows a microservices architecture where each service is responsible for a specific domain. The services communicate with each other via synchronous HTTP REST calls, while clients connect to the services using WebSocket for real-time, bidirectional communication.
 
+
+![alt text](image.png)
 
 ## 3. API Documentation
 
-### Service-to-Service and Client-Service APIs (HTTP)
+### Service-to-Service APIs (HTTP)
 
 #### User Service (`http://localhost:8000`)
 
-- **`POST /login`**: Logs in a user or creates a new one if they don\"t exist.
+- **`POST /login`**: Logs in a user or creates a new one if they don\'t exist.
   - **Request Body**: `{"username": "string"}`
   - **Response**: `{"userId": "string", "username": "string"}`
 
@@ -46,74 +47,82 @@ The CLI client also communicates with the backend services using HTTP requests, 
   - **Request Body**: `{"roomId": "string", "userId": "string"}`
   - **Response**: `{"roomId": "string", "roomName": "string", "players": ["string"]}`
 
-- **`GET /rooms/{roomId}/players`**: Retrieves room status and player list.
-  - **Response**: `{"roomName": "string", "players": ["string"]}`
+### Client-Server APIs (WebSocket)
 
-#### Game Service (`http://localhost:8002`)
+#### Game Service (`ws://localhost:8002/ws/{roomId}/{userId}`)
 
-- **`POST /play`**: Submits a player\"s move for the current round.
-  - **Request Body**: `{"roomId": "string", "userId": "string", "username": "string", "move": "string"}`
-  - **Response**: `{"status": "move received"}`
+**Client to Server Messages:**
 
-- **`GET /state/{room_id}/{user_id}`**: Polls for the current game state and result.
-  - **Response (waiting)**: `{"status": "waiting"}`
-  - **Response (result)**: `{"moves": {"player1_name": "move", "player2_name": "move"}, "winner": "player_name"}`
+- **Submit Move**: Submits a player's move for the current round.
+  ```json
+  {
+    "type": "submit_move",
+    "move": "rock" // "rock", "paper", or "scissors"
+  }
+  ```
 
-## 4. Setup and Running Instructions /////////////////////////////
+- **Ready for Next Round**: Indicates the client is ready for the next round after seeing the results.
+  ```json
+  {
+    "type": "ready_for_next_round"
+  }
+  ```
 
-To get the Rock Paper Scissors game up and running, follow these step-by-step instructions carefully.
+**Server to Client Messages:**
+
+- **Game Connected**: Sent upon successful WebSocket connection.
+- **Move Received**: Notifies clients that a player has made a move.
+- **Game Result**: Broadcasts the game result, including moves and the winner.
+- **Game Reset**: Notifies clients that the game has been reset for a new round.
+- **Player Disconnected**: Informs clients that an opponent has disconnected.
+
+## 4. Setup and Running Instructions
 
 ### Prerequisites
 
-*   **Python 3.7+**: Download and install from [python.org](https://www.python.org/downloads/).
-*   **`pip`**: Python's package installer, usually included with Python installations.
+- Python 3.7+
+- `pip` for package installation
 
 ### Installation
 
-1.  **Clone the repository** :
-    ```
-    git clone [REPOSITORY_URL]
-    cd...
+1.  **Clone the repository.**
 
-2.  **Set up virtual environments and install dependencies** in seperate terminal for each service :
-    ```
-     # For user-service
-    cd user-service
-    python3 -m venv .venv
-    source .venv/bin/activate
-    pip install -r requirements.txt
-    uvicorn main:app --host 0.0.0.0 --port 8000
-    
-    # For room-service
-    cd room-service
-    python3 -m venv .venv
-    source .venv/bin/activate
-    pip install -r requirements.txt
-    uvicorn main:app --host 0.0.0.0 --port 8001
-    
-   
-    # For game-service
-    cd game-service
-    python3 -m venv .venv
-    source .venv/bin/activate
-    pip install -r requirements.txt
-    uvicorn main:app --host 0.0.0.0 --port 8002
-    
+2.  **Install dependencies for each service and the client:**
 
-    # For cli-client
+    ```
+    # For each service (user-service, room-service, game-service)
+    cd <service-directory>
+    pip install -r requirements.txt
+
+    # For the CLI client
     cd cli-client
-    python3 -m venv .venv
-    source .venv/bin/activate
     pip install -r requirements.txt
-    python main.py
-    
     ```
 
+### Running the System
 
+1.  **Start each microservice in a separate terminal:**
 
+    ```
+    # Terminal 1: User Service
+    cd user-service
+    python main.py
 
+    # Terminal 2: Room Service
+    cd room-service
+    python main.py
 
+    # Terminal 3: Game Service
+    cd game-service
+    python main.py
+    ```
 
+2.  **Run the CLI client in a new terminal:**
 
+    ```
+    cd cli-client
+    python main.py
+    ```
 
+3.  **Follow the on-screen prompts** to log in, create or join a room, and play the game. You can run two instances of the client to play against yourself.
 

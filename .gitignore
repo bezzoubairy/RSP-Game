@@ -1,26 +1,35 @@
-# Python
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.pyc
-*.pyo
 *.pyd
+*.pyo
+
+# Distribution / packaging
 .Python
+build/
+dist/
+*.egg-info/
+wheels/
+htmlcov/
 
-# Virtual environment
+# Environments
+# Virtual environments created by venv or virtualenv
 .venv/
-virtualenv/
-env/
 venv/
+env/
 
-# Editor files
+# Editor/IDE specific files
 .vscode/
 .idea/
+*.swp
+*~
 
 # Logs and databases
 *.log
 *.sqlite3
+*.db
 
 # OS generated files
 .DS_Store
 .Trashes
 Thumbs.db
-
