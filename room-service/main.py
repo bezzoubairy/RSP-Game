@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware  # ADD THIS at top
 from pydantic import BaseModel
 import random
 import string 
@@ -13,9 +14,16 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Room Service", version="1.0.0")
 
-USER_SERVICE_URL = "http://localhost:8000"
-rooms = {}  # roomId -> {"roomName": str, "players": [userId], "connections": {userId: WebSocket}}
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
+USER_SERVICE_URL = "http://localhost:8000"
+rooms = {}  
 class CreateRoomRequest(BaseModel):
     userId: str
     roomName: str

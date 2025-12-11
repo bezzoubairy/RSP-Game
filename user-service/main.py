@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uuid
 import json
@@ -9,6 +10,15 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(title="User Service", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 # In-memory storage
 users = {}  # userId -> username
@@ -93,7 +103,7 @@ async def websocket_endpoint(websocket: WebSocket, user_id: str):
                 message = json.loads(data)
                 logger.info(f"Received message from user {user_id}: {message}")
                 
-                # Echo back for now (can be extended for user-specific features)
+             
                 await manager.send_personal_message({
                     "type": "echo",
                     "original_message": message,

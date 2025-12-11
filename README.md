@@ -1,128 +1,187 @@
-# Rock Paper Scissors - Distributed Game System
+# Rock-Scissors-Paper (RSP) Game - Distributed System
 
-This project is a simple, two-person, turn-based rock-paper-scissors game implemented with a distributed microservices architecture.
+This project is a distributed, two-person, turn-based Rock-Scissors-Paper game system. It is designed to demonstrate a microservices architecture, real-time communication using WebSockets, and the integration of multiple client applications.
 
-## 1. Technology Summary
+## Architecture Overview
 
-The project is built with the following technologies:
+The system is built on a microservices architecture, with three backend services responsible for specific domains. These services communicate with each other via synchronous HTTP requests. The clients (CLI and Web) communicate with the backend services primarily through asynchronous WebSocket connections for real-time gameplay.
 
-| Component      | Technology                                      |
-|----------------|-------------------------------------------------|
-| **Backend**    | Python 3, FastAPI, Uvicorn                      |
-| **CLI Client** | Python 3, `websockets`, `requests`, `asyncio`   |
+```
++-----------------+      +-----------------+
+|   Web Client    |      |    CLI Client   |
+| (HTML/CSS/JS)   |      |    (Python)     |
++-------+---------+      +--------+--------+
+        |                           |
+        +---------+     +-----------+
+                  |     |
+                  v     v
+      +-----------[WebSocket & HTTP]------------+
+      |                                         |
+      |      Backend Microservices Layer        |
+      |                                         |
+      +-----------------------------------------+
+      |           |           |                 |
+      v           v           v                 v
++-----------+ +-----------+ +-----------+ +-----------+
+| User Svc  | | Room Svc  | | Game Svc  | | CORS MW   |
+| (p: 8000) | | (p: 8001) | | (p: 8002) | | (All Svcs)|
++-----------+ +-----------+ +-----------+ +-----------+
+      ^           ^           ^
+      |___________|___________| (HTTP)
 
-### Microservices
+```
 
-- **User Service**: Manages user identification and registration.
-- **Room Service**: Handles game room creation, player management, and room status.
-- **Game Service**: Implements the core game logic, including move validation and winner determination.
+## Technology Stack
 
-## 2. Architecture Overview
+| Component             | Technology                                       |
+| --------------------- | ------------------------------------------------ |
+| **Backend Language**    | Python 3.11+                                     |
+| **Web Framework**       | FastAPI                                          |
+| **ASGI Server**         | Uvicorn                                          |
+| **Real-time Protocol**  | WebSockets                                       |
+| **HTTP Client**         | `requests` (for service-to-service calls)        |
+| **Web Client**          | HTML5, CSS3, Vanilla JavaScript                  |
+| **CLI Client**          | Python (`websockets`, `requests`)                |
+| **Data Storage**        | In-Memory (Python Dictionaries)                  |
 
-The system follows a microservices architecture where each service is responsible for a specific domain. The services communicate with each other via synchronous HTTP REST calls, while clients connect to the services using WebSocket for real-time, bidirectional communication.
-
-
-![alt text](image.png)
-
-## 3. API Documentation
-
-### Service-to-Service APIs (HTTP)
-
-#### User Service (`http://localhost:8000`)
-
-- **`POST /login`**: Logs in a user or creates a new one if they don\'t exist.
-  - **Request Body**: `{"username": "string"}`
-  - **Response**: `{"userId": "string", "username": "string"}`
-
-- **`GET /users/{userId}`**: Retrieves user information by their ID.
-  - **Response**: `{"userId": "string", "username": "string"}`
-
-#### Room Service (`http://localhost:8001`)
-
-- **`POST /create-room`**: Creates a new game room.
-  - **Request Body**: `{"userId": "string", "roomName": "string"}`
-  - **Response**: `{"roomId": "string", "roomName": "string", "players": ["string"]}`
-
-- **`POST /join-room`**: Allows a user to join an existing room.
-  - **Request Body**: `{"roomId": "string", "userId": "string"}`
-  - **Response**: `{"roomId": "string", "roomName": "string", "players": ["string"]}`
-
-### Client-Server APIs (WebSocket)
-
-#### Game Service (`ws://localhost:8002/ws/{roomId}/{userId}`)
-
-**Client to Server Messages:**
-
-- **Submit Move**: Submits a player's move for the current round.
-  ```json
-  {
-    "type": "submit_move",
-    "move": "rock" // "rock", "paper", or "scissors"
-  }
-  ```
-
-- **Ready for Next Round**: Indicates the client is ready for the next round after seeing the results.
-  ```json
-  {
-    "type": "ready_for_next_round"
-  }
-  ```
-
-**Server to Client Messages:**
-
-- **Game Connected**: Sent upon successful WebSocket connection.
-- **Move Received**: Notifies clients that a player has made a move.
-- **Game Result**: Broadcasts the game result, including moves and the winner.
-- **Game Reset**: Notifies clients that the game has been reset for a new round.
-- **Player Disconnected**: Informs clients that an opponent has disconnected.
-
-## 4. Setup and Running Instructions
+## How to Run the Project
 
 ### Prerequisites
 
-- Python 3.7+
-- `pip` for package installation
+- Python 3.8 or newer
+- `pip` for package management
 
-### Installation
+### 1. Clone the Repository
 
-1.  **Clone the repository.**
+```
+git clone https://github.com/bezzoubairy/RSP-Game.git
+cd RSP-Game
+```
 
-2.  **Install dependencies for each service and the client:**
+### 2. Set Up and Run Backend Services
 
-    ```
-    # For each service (user-service, room-service, game-service)
-    cd <service-directory>
-    pip install -r requirements.txt
+For each service (`user-service`, `room-service`, `game-service`), you need to install dependencies. It is recommended to use a virtual environment.
 
-    # For the CLI client
-    cd cli-client
-    pip install -r requirements.txt
-    ```
+Open **three separate terminals** for the backend services.
 
-### Running the System
+**Terminal 1: User Service**
+```
+cd user-service
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --port 8000 --reload
+```
 
-1.  **Start each microservice in a separate terminal:**
+**Terminal 2: Room Service**
+```
+cd room-service
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --port 8001 --reload
+```
 
-    ```
-    # Terminal 1: User Service
-    cd user-service
-    python main.py
+**Terminal 3: Game Service**
+```
+cd game-service
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --port 8002 --reload
+```
 
-    # Terminal 2: Room Service
-    cd room-service
-    python main.py
+### 3. Run a Client
 
-    # Terminal 3: Game Service
-    cd game-service
-    python main.py
-    ```
+You can run either the Web Client or the CLI Client.
 
-2.  **Run the CLI client in a new terminal:**
+**Option A: Run the Web Client (Recommended)**
 
-    ```
-    cd cli-client
-    python main.py
-    ```
+Open a **fourth terminal**.
 
-3.  **Follow the on-screen prompts** to log in, create or join a room, and play the game. You can run two instances of the client to play against yourself.
+```
+cd web-client
+python -m http.server 8080
+```
 
+Now, open your web browser and navigate to `http://localhost:8080`. You can open two tabs to simulate two different players.
+
+**Option B: Run the CLI Client**
+
+Open a **fourth terminal**.
+
+```
+cd cli-client
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+python main.py
+```
+
+To play a game, you will need to run two instances of the CLI client in two separate terminals.
+
+## API Documentation
+
+### Service-to-Service APIs (HTTP)
+
+- **`GET /users/{userId}`** (Called by Room and Game Service)
+  - **Service:** User Service
+  - **Description:** Fetches the username for a given `userId`.
+  - **Response:** `{"userId": "...", "username": "..."}`
+
+### Client-to-Server APIs (HTTP)
+
+- **`POST /login`**
+  - **Service:** User Service
+  - **Description:** Logs in or registers a new user.
+  - **Request Body:** `{"username": "..."}`
+  - **Response:** `{"userId": "...", "username": "..."}`
+
+- **`POST /create-room`**
+  - **Service:** Room Service
+  - **Description:** Creates a new game room.
+  - **Request Body:** `{"userId": "...", "roomName": "..."}`
+  - **Response:** `{"roomId": "...", "roomName": "...", "players": [...]}`
+
+- **`POST /join-room`**
+  - **Service:** Room Service
+  - **Description:** Joins an existing game room.
+  - **Request Body:** `{"userId": "...", "roomId": "..."}`
+  - **Response:** `{"roomId": "...", "roomName": "...", "players": [...]}`
+
+### Real-time APIs (WebSocket)
+
+- **Connection URL:** `ws://localhost:8002/ws/{roomId}/{userId}`
+- **Service:** Game Service
+
+#### Client-to-Server Messages
+
+- **`submit_move`**
+  - **Description:** Submits the player's move for the current round.
+  - **Payload:** `{"type": "submit_move", "move": "rock" | "paper" | "scissors"}`
+
+- **`ready_for_next_round`**
+  - **Description:** Notifies the server that the client is ready to start the next round after viewing the results.
+  - **Payload:** `{"type": "ready_for_next_round"}`
+
+#### Server-to-Client Messages
+
+- **`game_connected`**
+  - **Description:** Confirms that the client has successfully connected to the game's WebSocket.
+  - **Payload:** `{"type": "game_connected", "message": "..."}`
+
+- **`move_received`**
+  - **Description:** Informs clients that a player has submitted their move.
+  - **Payload:** `{"type": "move_received", "message": "...", "moves_count": 1 | 2}`
+
+- **`game_result`**
+  - **Description:** Broadcasts the result of the round after both players have moved.
+  - **Payload:** `{"type": "game_result", "result": {"moves": {"player1_name": "move1", "player2_name": "move2"}, "winner": "player_name" | "draw"}}`
+
+- **`game_reset`**
+  - **Description:** Informs clients that the game state has been reset and a new round can begin.
+  - **Payload:** `{"type": "game_reset", "message": "..."}`
+
+- **`player_disconnected`**
+  - **Description:** Notifies clients that an opponent has disconnected from the game.
+  - **Payload:** `{"type": "player_disconnected", "message": "..."}`

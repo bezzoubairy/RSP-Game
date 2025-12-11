@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSP Game - Web Client</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <h1>🎮 Rock-Scissors-Paper</h1>
+        
+        <!-- Login Section -->
+        <section id="login-section">
+            <h2>Welcome! Please Login</h2>
+            <input type="text" id="username-input" placeholder="Enter Your Username" autofocus>
+            <button onclick="login()">Login</button>
+            <p id="login-status" class="status-message"></p>
+        </section>
+
+        <!-- Room Section -->
+        <section id="room-section" style="display: none;">
+            <h2>Hi, <span id="current-username" class="highlight"></span>! 👋</h2>
+            
+            <div class="room-options">
+                <div class="room-option">
+                    <h3>Create New Room</h3>
+                    <input type="text" id="room-name-input" placeholder="Room Name (optional)">
+                    <button onclick="createRoom()">Create Room</button>
+                </div>
+                
+                <div class="divider">OR</div>
+                
+                <div class="room-option">
+                    <h3>Join Existing Room</h3>
+                    <input type="text" id="room-id-input" placeholder="Enter Room ID">
+                    <button onclick="joinRoom()">Join Room</button>
+                </div>
+            </div>
+            
+            <p id="room-status" class="status-message"></p>
+        </section>
+
+        <!-- Game Section -->
+        <section id="game-section" style="display: none;">
+            <div class="game-header">
+                <h2>Room: <span id="current-room-id" class="highlight"></span></h2>
+                <p id="game-message" class="game-status">Waiting for opponent...</p>
+            </div>
+            
+            <div id="game-board">
+                <button class="move-button" onclick="submitMove('rock')">
+                    <span class="emoji">🪨</span>
+                    <span class="label">Rock</span>
+                </button>
+                <button class="move-button" onclick="submitMove('paper')">
+                    <span class="emoji">📄</span>
+                    <span class="label">Paper</span>
+                </button>
+                <button class="move-button" onclick="submitMove('scissors')">
+                    <span class="emoji">✂️</span>
+                    <span class="label">Scissors</span>
+                </button>
+            </div>
+            
+            <div id="result-display" style="display: none;"></div>
+            
+            <button id="play-again-button" style="display: none;" onclick="readyForNextRound()">
+                🔄 Play Again
+            </button>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

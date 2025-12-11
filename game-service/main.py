@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware  # ADD THIS at top
 import uvicorn
 import json
 import logging
@@ -10,10 +11,18 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Game Service", version="1.0.0")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 USER_SERVICE_URL = "http://localhost:8000"
 ROOM_SERVICE_URL = "http://localhost:8001"
 
-# roomId -> { "moves": {userId: move}, "usernames": {userId: username}, "result": None, "seen": set() }
+
 rooms = {}
 
 class ConnectionManager:
@@ -153,7 +162,7 @@ async def get_state(room_id: str, user_id: str):
     if rooms[room_id]["result"]:
         result = rooms[room_id]["result"]
     else:
-        # This shouldn't happen with WebSocket implementation, but kept for safety
+       
         await process_game_result(room_id)
         result = rooms[room_id]["result"]
 
